@@ -2,9 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\ParseHomeownersFromCsvRequest;
+use App\Services\CsvPeopleParserService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Response;
 
 class ParseHomeownersFromCsvController extends Controller
 {
-    //
+    public function __construct(private CsvPeopleParserService $service){}
+
+    public function __invoke(ParseHomeownersFromCsvRequest $request): JsonResponse
+    {
+        $homeowners = $this->service->parseUploadedCsv($request->validated('csv'), 'homeowner');
+
+        return Response::json($homeowners);
+    }
 }
