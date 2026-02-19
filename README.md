@@ -48,6 +48,9 @@ php artisan serve
 npm run dev
 ```
 
+### 4) Test
+- Open: http://127.0.0.1:8000
+
 
 
 
