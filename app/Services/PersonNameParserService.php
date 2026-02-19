@@ -8,7 +8,7 @@ final class PersonNameParserService
 {
     public function parse(string $raw): array
     {
-        $raw = $this->normalize($raw);
+        $raw = $this->normalise($raw);
 
         if (str_contains($raw, ' and ')) {
 
@@ -17,8 +17,18 @@ final class PersonNameParserService
                 $lastName = $tokens[3];
 
                 return [
-                    new PersonDTO($this->normalizeTitle($tokens[0]), null,$lastName, null ),
-                    new PersonDTO($this->normalizeTitle($tokens[2]), null,$lastName, null),
+                    new PersonDTO(
+                        title: $this->normaliseTitle($tokens[0]),
+                        first_name: null,
+                        last_name:  $lastName,
+                        initial: null
+                    ),
+                    new PersonDTO(
+                        title: $this->normaliseTitle($tokens[2]),
+                        first_name: null,
+                        last_name:  $lastName,
+                        initial: null
+                    ),
                 ];
             }
 
@@ -48,8 +58,19 @@ final class PersonNameParserService
                 $initials = $this->computeInitials($firstName, $lastName);
 
                 return [
-                    new PersonDTO($this->normalizeTitle($tokens[0]), $firstName, $lastName, $initials),
-                    new PersonDTO($this->normalizeTitle($tokens[2]), $firstName, $lastName, $initials),
+                    new PersonDTO(
+                        title: $this->normaliseTitle($tokens[0]),
+                        first_name: $firstName,
+                        last_name:  $lastName,
+                        initial: $initials,
+                        ),
+
+                     new PersonDTO(
+                         title: $this->normaliseTitle($tokens[2]),
+                         first_name: $firstName,
+                         last_name:  $lastName,
+                         initial: $initials,
+                     ),
                 ];
             }
         }
@@ -57,7 +78,7 @@ final class PersonNameParserService
         return [$this->parseSinglePerson($raw)];
     }
 
-    private function normalize(string $raw): string
+    private function normalise(string $raw): string
     {
         $raw = trim($raw);
         $raw = preg_replace('/\s+/', ' ', $raw) ?? $raw;
@@ -66,7 +87,6 @@ final class PersonNameParserService
         $raw = preg_replace('/\s*&\s*/', ' & ', $raw) ?? $raw;
         $raw = preg_replace('/\s+and\s+/i', ' and ', $raw) ?? $raw;
 
-        // dataset includes "Mister"
         $raw = preg_replace('/^Mister\b/i', 'Mr', $raw) ?? $raw;
 
         return trim($raw);
@@ -83,7 +103,7 @@ final class PersonNameParserService
         return in_array(strtolower($token), ['mr', 'mrs', 'ms', 'miss', 'dr', 'prof', 'mister'], true);
     }
 
-    private function normalizeTitle(string $title): string
+    private function normaliseTitle(string $title): string
     {
         return match (strtolower($title)) {
             'mr' => 'Mr',
@@ -129,10 +149,15 @@ final class PersonNameParserService
         $parts = $chunk === '' ? [] : explode(' ', $chunk);
 
         $titleRaw = $parts[0] ?? 'Mr';
-        $title = $this->normalizeTitle($titleRaw);
+        $title = $this->normaliseTitle($titleRaw);
 
         if (count($parts) === 2) {
-            return new PersonDTO($title, null, $parts[1],null);
+            return new PersonDTO(
+                title: $title,
+                first_name: null,
+                last_name: $parts[1],
+                initial: null
+            );
         }
 
         if (count($parts) >= 3) {
@@ -149,9 +174,19 @@ final class PersonNameParserService
                 $initial = $this->computeInitials($firstName, $lastName);
             }
 
-            return new PersonDTO($title, $firstName, $lastName, $initial);
+            return new PersonDTO(
+                title: $title,
+                first_name:  $firstName,
+                last_name:  $lastName,
+                initial: $initial
+            );
         }
 
-        return new PersonDTO($title, null, $parts[1] ?? '', null);
+        return new PersonDTO(
+            title: $title,
+            first_name:  null,
+            last_name:  $parts[1] ?? '',
+            initial: null
+            );
     }
 }
