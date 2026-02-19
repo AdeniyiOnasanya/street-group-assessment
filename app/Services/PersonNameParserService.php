@@ -4,30 +4,38 @@ namespace App\Services;
 
 use App\DTO\PersonDTO;
 
-final class PersonNameParserService
+class PersonNameParserService
 {
+    private const TITLES = ['mister', 'mr', 'mrs', 'ms', 'miss', 'dr', 'prof',];
+
     public function parse(string $raw): array
     {
         $raw = $this->normalise($raw);
 
         if (str_contains($raw, ' and ')) {
 
-            $tokens = explode(' ', $raw);
-            if (count($tokens) === 4 && $this->isTitleToken($tokens[0]) && $this->isTitleToken($tokens[2])) {
-                $lastName = $tokens[3];
+            $parts = explode(' ', $raw);
+
+            if (
+                count($parts) === 4
+                && $this->isTitlePart($parts[0])
+                && strtolower($parts[1]) === 'and'
+                && $this->isTitlePart($parts[2])
+            ) {
+                $lastName = $parts[3];
 
                 return [
                     new PersonDTO(
-                        title: $this->normaliseTitle($tokens[0]),
+                        title: $this->normaliseTitle($parts[0]),
                         first_name: null,
-                        last_name:  $lastName,
-                        initial: null
+                        last_name: $lastName,
+                        initial: null,
                     ),
                     new PersonDTO(
-                        title: $this->normaliseTitle($tokens[2]),
+                        title: $this->normaliseTitle($parts[2]),
                         first_name: null,
-                        last_name:  $lastName,
-                        initial: null
+                        last_name: $lastName,
+                        initial: null,
                     ),
                 ];
             }
@@ -40,37 +48,34 @@ final class PersonNameParserService
                     $this->parseSinglePerson(trim($right)),
                 ];
             }
-
-
         }
 
         if (str_contains($raw, ' & ')) {
-            $tokens = explode(' ', $raw);
+            $parts = explode(' ', $raw);
 
             if (
-                count($tokens) === 5
-                && $tokens[1] === '&'
-                && $this->isTitleToken($tokens[0])
-                && $this->isTitleToken($tokens[2])
+                count($parts) === 5
+                && $parts[1] === '&'
+                && $this->isTitlePart($parts[0])
+                && $this->isTitlePart($parts[2])
             ) {
-                $firstName = $tokens[3];
-                $lastName  = $tokens[4];
-                $initials = $this->computeInitials($firstName, $lastName);
+                $firstName = $parts[3];
+                $lastName  = $parts[4];
+                $initials  = $this->computeInitials($firstName, $lastName);
 
                 return [
                     new PersonDTO(
-                        title: $this->normaliseTitle($tokens[0]),
+                        title: $this->normaliseTitle($parts[0]),
                         first_name: $firstName,
-                        last_name:  $lastName,
+                        last_name: $lastName,
                         initial: $initials,
-                        ),
-
-                     new PersonDTO(
-                         title: $this->normaliseTitle($tokens[2]),
-                         first_name: $firstName,
-                         last_name:  $lastName,
-                         initial: $initials,
-                     ),
+                    ),
+                    new PersonDTO(
+                        title: $this->normaliseTitle($parts[2]),
+                        first_name: $firstName,
+                        last_name: $lastName,
+                        initial: $initials,
+                    ),
                 ];
             }
         }
@@ -94,13 +99,13 @@ final class PersonNameParserService
 
     private function startsWithTitle(string $chunk): bool
     {
-        $first = explode(' ', trim($chunk))[0] ?? '';
-        return $this->isTitleToken($first);
+        $firstPart = explode(' ', trim($chunk))[0] ?? '';
+        return $this->isTitlePart($firstPart);
     }
 
-    private function isTitleToken(string $token): bool
+    private function isTitlePart(string $part): bool
     {
-        return in_array(strtolower($token), ['mr', 'mrs', 'ms', 'miss', 'dr', 'prof', 'mister'], true);
+        return in_array(strtolower($part), self::TITLES, true);
     }
 
     private function normaliseTitle(string $title): string
@@ -117,14 +122,14 @@ final class PersonNameParserService
         };
     }
 
-    private function isInitialToken(string $token): bool
+    private function isInitialPart(string $part): bool
     {
-        return (bool) preg_match('/^[A-Za-z]\.?$/', $token);
+        return (bool) preg_match('/^[A-Za-z]\.?$/', $part);
     }
 
-    private function cleanInitial(string $token): string
+    private function cleanInitial(string $part): string
     {
-        return strtoupper(rtrim($token, '.'));
+        return strtoupper(rtrim($part, '.'));
     }
 
     private function computeInitials(?string $firstName, ?string $lastName): ?string
@@ -133,14 +138,14 @@ final class PersonNameParserService
             return null;
         }
 
-        $f = mb_substr($firstName, 0, 1);
-        $l = mb_substr($lastName, 0, 1);
+        $first = mb_substr($firstName, 0, 1);
+        $last  = mb_substr($lastName, 0, 1);
 
-        if ($f === '' || $l === '') {
+        if ($first === '' || $last === '') {
             return null;
         }
 
-        return strtoupper($f . $l);
+        return strtoupper($first . $last);
     }
 
     private function parseSinglePerson(string $chunk): PersonDTO
@@ -156,37 +161,37 @@ final class PersonNameParserService
                 title: $title,
                 first_name: null,
                 last_name: $parts[1],
-                initial: null
+                initial: null,
             );
         }
 
         if (count($parts) >= 3) {
-            $middle = $parts[1];
+            $middlePart = $parts[1];
             $lastName = $parts[count($parts) - 1];
 
             $firstName = null;
             $initial = null;
 
-            if ($this->isInitialToken($middle)) {
-                $initial = $this->cleanInitial($middle);
+            if ($this->isInitialPart($middlePart)) {
+                $initial = $this->cleanInitial($middlePart);
             } else {
-                $firstName = $middle;
+                $firstName = $middlePart;
                 $initial = $this->computeInitials($firstName, $lastName);
             }
 
             return new PersonDTO(
                 title: $title,
-                first_name:  $firstName,
-                last_name:  $lastName,
-                initial: $initial
+                first_name: $firstName,
+                last_name: $lastName,
+                initial: $initial,
             );
         }
 
         return new PersonDTO(
             title: $title,
-            first_name:  null,
-            last_name:  $parts[1] ?? '',
-            initial: null
-            );
+            first_name: null,
+            last_name: $parts[1] ?? '',
+            initial: null,
+        );
     }
 }

@@ -6,7 +6,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 use SplFileObject;
 
-readonly class CsvPeopleParserService
+class CsvPeopleParserService
 {
     public function __construct( private PersonNameParserService $personNameParser,) {}
 
