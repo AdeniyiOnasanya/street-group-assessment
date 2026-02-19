@@ -60,7 +60,7 @@ class CsvPeopleParserService
     private function cleanHeader(array $row): array
     {
         return array_map(
-            static fn ($h) => is_string($h) ? trim($h) : '',
+            static fn ($header) => is_string($header) ? trim($header) : '',
             $row
         );
     }
