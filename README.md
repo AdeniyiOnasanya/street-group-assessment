@@ -1,4 +1,4 @@
-# Street Group Assessment (Homeowners CSV Parser)
+# Street Group Assessment (Homeowner Name CSV Parser)
 
 This is a Laravel, Vue (TypeScript) application that accepts a CSV upload containing a homeowner names and returns a JSON list of individual people records.
 
