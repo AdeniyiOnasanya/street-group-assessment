@@ -16,7 +16,7 @@ class CsvPeopleParserService
         $csv->setFlags(SplFileObject::READ_CSV | SplFileObject::SKIP_EMPTY | SplFileObject::DROP_NEW_LINE);
 
         $header = null;
-        $homeownerIndex = null;
+        $columnIndex = null;
 
         $people = [];
 
@@ -27,9 +27,9 @@ class CsvPeopleParserService
 
             if ($header === null) {
                 $header = $this->cleanHeader($row);
-                $homeownerIndex = $this->findColumnIndex($header, $columnName);
+                $columnIndex = $this->findColumnIndex($header, $columnName);
 
-                if ($homeownerIndex === null) {
+                if ($columnIndex === null) {
                     throw ValidationException::withMessages([
                         'csv' => ["CSV must include a $columnName header column."],
                         'headers_found' => $header,
@@ -39,7 +39,7 @@ class CsvPeopleParserService
                 continue;
             }
 
-            $raw = $this->stringCell($row[$homeownerIndex] ?? null);
+            $raw = $this->stringCell($row[$columnIndex] ?? null);
             if ($raw === '') {
                 continue;
             }
