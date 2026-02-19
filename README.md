@@ -12,7 +12,7 @@ Each person record follows this schema:
 The User Interface provides:
 - a upload form.
 - loading, success, and error states.
-- - a **JSON view**
+- a **JSON view**
 
 ## Tech Stack
 - Laravel 12
